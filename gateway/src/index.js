@@ -1,24 +1,17 @@
-import dotenv from "dotenv";
-import express, { Request, Response, NextFunction } from "express";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { RoundRobinLoadBalancer, ServiceInstance, ServiceName } from "./loadBalancer";
-import { authenticateJwt, createDemoToken } from "./auth";
-import { getHealthSnapshot, isInstanceHealthy, startHealthChecks } from "./healthChecker";
-import { recordRequest, recordUpstreamError, renderMetrics } from "./metrics";
-import { rateLimiter } from "./rateLimiter";
-import { connectRedis } from "./redisClient";
+const dotenv = require("dotenv");
+const express = require("express");
+const { createProxyMiddleware } = require("http-proxy-middleware");
+const { authenticateJwt, createDemoToken } = require("./auth");
+const { getHealthSnapshot, isInstanceHealthy, startHealthChecks } = require("./healthChecker");
+const { RoundRobinLoadBalancer } = require("./loadBalancer");
+const { recordRequest, recordUpstreamError, renderMetrics } = require("./metrics");
+const { rateLimiter } = require("./rateLimiter");
+const { connectRedis } = require("./redisClient");
 
 dotenv.config();
 
 const app = express();
-
 const port = Number(process.env.GATEWAY_PORT) || 3000;
-
-type GatewayRequest = Request & {
-  selectedServiceInstance?: string;
-  selectedServiceUrl?: string;
-  selectedInstance?: ServiceInstance;
-};
 
 const loadBalancer = new RoundRobinLoadBalancer({
   users: [
@@ -35,13 +28,12 @@ const loadBalancer = new RoundRobinLoadBalancer({
   ]
 });
 
-function requestLogger(req: Request, res: Response, next: NextFunction) {
+function requestLogger(req, res, next) {
   const startedAt = Date.now();
 
   res.on("finish", () => {
-    const gatewayReq = req as GatewayRequest;
     const durationMs = Date.now() - startedAt;
-    const selectedService = gatewayReq.selectedServiceInstance || "gateway";
+    const selectedService = req.selectedServiceInstance || "gateway";
 
     recordRequest(req, res.statusCode, durationMs, selectedService);
 
@@ -53,8 +45,8 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function selectHealthyInstance(serviceName: ServiceName) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+function selectHealthyInstance(serviceName) {
+  return async (req, res, next) => {
     try {
       const registry = loadBalancer.getRegistry();
       const healthResults = await Promise.all(
@@ -67,19 +59,18 @@ function selectHealthyInstance(serviceName: ServiceName) {
         .filter((result) => result.healthy)
         .map((result) => result.instance.name);
       const selectedInstance = loadBalancer.getNextHealthyInstance(serviceName, healthyInstanceNames);
-      const gatewayReq = req as GatewayRequest;
 
       if (!selectedInstance) {
-        gatewayReq.selectedServiceInstance = `${serviceName}:no-healthy-instance`;
+        req.selectedServiceInstance = `${serviceName}:no-healthy-instance`;
         return res.status(503).json({
           error: "Service Unavailable",
           message: `No healthy ${serviceName} service instances are available`
         });
       }
 
-      gatewayReq.selectedInstance = selectedInstance;
-      gatewayReq.selectedServiceInstance = selectedInstance.name;
-      gatewayReq.selectedServiceUrl = selectedInstance.url;
+      req.selectedInstance = selectedInstance;
+      req.selectedServiceInstance = selectedInstance.name;
+      req.selectedServiceUrl = selectedInstance.url;
 
       next();
     } catch (error) {
@@ -92,18 +83,17 @@ function selectHealthyInstance(serviceName: ServiceName) {
   };
 }
 
-function createServiceProxy(serviceName: ServiceName) {
+function createServiceProxy(serviceName) {
   return createProxyMiddleware({
     target: "http://localhost",
     changeOrigin: true,
-    router: (req) => (req as GatewayRequest).selectedServiceUrl || "http://localhost",
-    pathRewrite: (_path, req) => (req as Request).originalUrl,
+    router: (req) => req.selectedServiceUrl || "http://localhost",
+    pathRewrite: (_path, req) => req.originalUrl,
     proxyTimeout: 5000,
     on: {
-      error(error, _req, res) {
-        const gatewayReq = _req as GatewayRequest;
+      error(error, req, res) {
         console.error(
-          `Proxy error while calling ${gatewayReq.selectedServiceInstance || serviceName}:`,
+          `Proxy error while calling ${req.selectedServiceInstance || serviceName}:`,
           error.message
         );
         recordUpstreamError();
@@ -177,7 +167,7 @@ app.use((_req, res) => {
   });
 });
 
-export async function startGateway() {
+async function startGateway() {
   await connectRedis();
   startHealthChecks(loadBalancer.getRegistry());
 
@@ -194,4 +184,8 @@ if (require.main === module) {
   });
 }
 
-export { app, loadBalancer };
+module.exports = {
+  app,
+  loadBalancer,
+  startGateway
+};

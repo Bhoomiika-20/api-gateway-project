@@ -1,4 +1,4 @@
-import { RoundRobinLoadBalancer } from "../gateway/src/loadBalancer";
+const { RoundRobinLoadBalancer } = require("../gateway/src/loadBalancer");
 
 describe("RoundRobinLoadBalancer", () => {
   it("rotates requests across healthy service instances", () => {
@@ -11,13 +11,13 @@ describe("RoundRobinLoadBalancer", () => {
       products: [{ name: "product-service-1", url: "http://localhost:6001" }]
     });
 
-    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"])?.name).toBe(
+    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"]).name).toBe(
       "user-service-1"
     );
-    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"])?.name).toBe(
+    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"]).name).toBe(
       "user-service-2"
     );
-    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"])?.name).toBe(
+    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-1", "user-service-2"]).name).toBe(
       "user-service-1"
     );
   });
@@ -32,7 +32,7 @@ describe("RoundRobinLoadBalancer", () => {
       products: [{ name: "product-service-1", url: "http://localhost:6001" }]
     });
 
-    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-2"])?.name).toBe("user-service-2");
+    expect(loadBalancer.getNextHealthyInstance("users", ["user-service-2"]).name).toBe("user-service-2");
     expect(loadBalancer.getNextHealthyInstance("users", [])).toBeNull();
   });
 });

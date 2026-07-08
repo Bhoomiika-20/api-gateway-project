@@ -1,6 +1,6 @@
-import request from "supertest";
-import { app } from "../gateway/src/index";
-import { resetMetricsForTests } from "../gateway/src/metrics";
+const request = require("supertest");
+const { app } = require("../gateway/src/index");
+const { resetMetricsForTests } = require("../gateway/src/metrics");
 
 jest.mock("../gateway/src/healthChecker", () => ({
   getHealthSnapshot: jest.fn(async () => ({

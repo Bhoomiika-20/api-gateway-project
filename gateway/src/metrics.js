@@ -1,28 +1,24 @@
-import { Request } from "express";
-
-type CounterMap = Record<string, number>;
-
 const metrics = {
   totalRequests: 0,
   requestDurationCount: 0,
   requestDurationSumMs: 0,
-  requestsByStatus: {} as CounterMap,
-  requestsByRoute: {} as CounterMap,
-  requestsByService: {} as CounterMap,
+  requestsByStatus: {},
+  requestsByRoute: {},
+  requestsByService: {},
   upstreamErrors: 0,
   rateLimitedRequests: 0
 };
 
-function increment(map: CounterMap, key: string) {
+function increment(map, key) {
   map[key] = (map[key] || 0) + 1;
 }
 
-function getRouteLabel(req: Request) {
+function getRouteLabel(req) {
   const firstSegment = req.path.split("/").filter(Boolean)[0];
   return firstSegment ? `/${firstSegment}` : "/";
 }
 
-export function recordRequest(req: Request, statusCode: number, durationMs: number, serviceName = "gateway") {
+function recordRequest(req, statusCode, durationMs, serviceName = "gateway") {
   metrics.totalRequests += 1;
   metrics.requestDurationCount += 1;
   metrics.requestDurationSumMs += durationMs;
@@ -32,15 +28,15 @@ export function recordRequest(req: Request, statusCode: number, durationMs: numb
   increment(metrics.requestsByService, serviceName);
 }
 
-export function recordUpstreamError() {
+function recordUpstreamError() {
   metrics.upstreamErrors += 1;
 }
 
-export function recordRateLimitedRequest() {
+function recordRateLimitedRequest() {
   metrics.rateLimitedRequests += 1;
 }
 
-export function renderMetrics(healthSnapshot: Record<string, string>) {
+function renderMetrics(healthSnapshot) {
   const lines = [
     "# HELP gateway_requests_total Total HTTP requests handled by the gateway",
     "# TYPE gateway_requests_total counter",
@@ -87,7 +83,7 @@ export function renderMetrics(healthSnapshot: Record<string, string>) {
   return `${lines.join("\n")}\n`;
 }
 
-export function resetMetricsForTests() {
+function resetMetricsForTests() {
   metrics.totalRequests = 0;
   metrics.requestDurationCount = 0;
   metrics.requestDurationSumMs = 0;
@@ -97,3 +93,11 @@ export function resetMetricsForTests() {
   metrics.upstreamErrors = 0;
   metrics.rateLimitedRequests = 0;
 }
+
+module.exports = {
+  recordRequest,
+  recordUpstreamError,
+  recordRateLimitedRequest,
+  renderMetrics,
+  resetMetricsForTests
+};

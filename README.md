@@ -1,6 +1,6 @@
 # Resume-Ready API Gateway
 
-A custom API Gateway built from scratch with Node.js, Express, TypeScript, Redis, JWT, Docker, and Jest.
+A custom API Gateway built from scratch with Node.js, Express, JavaScript, Redis, JWT, Docker, and Jest.
 
 The goal is to demonstrate backend engineering and system design fundamentals without using Nginx, Kong, Traefik, or an existing API Gateway.
 
@@ -22,7 +22,7 @@ The goal is to demonstrate backend engineering and system design fundamentals wi
 
 - Node.js
 - Express.js
-- TypeScript
+- JavaScript
 - http-proxy-middleware
 - Redis
 - JWT
@@ -58,13 +58,13 @@ product-service-2:6002
 api-gateway-project/
   gateway/
     src/
-      auth.ts
-      healthChecker.ts
-      index.ts
-      loadBalancer.ts
-      metrics.ts
-      rateLimiter.ts
-      redisClient.ts
+      auth.js
+      healthChecker.js
+      index.js
+      loadBalancer.js
+      metrics.js
+      rateLimiter.js
+      redisClient.js
   services/
     user-service/
     order-service/
@@ -249,7 +249,7 @@ Run automated tests:
 npm test
 ```
 
-Run TypeScript build:
+Run JavaScript syntax check:
 
 ```bash
 npm run build
@@ -282,7 +282,7 @@ PRODUCT_SERVICE_2_URL=http://localhost:6002
 
 ## Resume Bullet Points
 
-- Built a custom API Gateway using Node.js, Express, and TypeScript to route traffic across user, order, and product microservices.
+- Built a custom API Gateway using Node.js, Express, and JavaScript to route traffic across user, order, and product microservices.
 - Implemented reverse proxy routing with custom Round Robin load balancing across multiple service instances.
 - Added JWT authentication at the gateway layer to centralize access control for protected service routes.
 - Integrated Redis for IP-based rate limiting and service health caching.

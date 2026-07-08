@@ -1,15 +1,12 @@
-import { redisClient } from "./redisClient";
-import { ServiceInstance, ServiceName } from "./loadBalancer";
-
-type ServiceRegistry = Record<ServiceName, ServiceInstance[]>;
+const { redisClient } = require("./redisClient");
 
 const healthCheckIntervalMs = Number(process.env.HEALTH_CHECK_INTERVAL_MS) || 5000;
 
-function healthKey(instanceName: string) {
+function healthKey(instanceName) {
   return `service:${instanceName}`;
 }
 
-async function checkInstanceHealth(instance: ServiceInstance) {
+async function checkInstanceHealth(instance) {
   try {
     const response = await fetch(`${instance.url}/health`);
     const status = response.ok ? "UP" : "DOWN";
@@ -24,13 +21,13 @@ async function checkInstanceHealth(instance: ServiceInstance) {
   }
 }
 
-export async function refreshHealthCache(services: ServiceRegistry) {
+async function refreshHealthCache(services) {
   const instances = Object.values(services).flat();
 
   await Promise.all(instances.map((instance) => checkInstanceHealth(instance)));
 }
 
-export function startHealthChecks(services: ServiceRegistry) {
+function startHealthChecks(services) {
   refreshHealthCache(services).catch((error) => {
     console.error("Initial health check failed:", error);
   });
@@ -42,12 +39,12 @@ export function startHealthChecks(services: ServiceRegistry) {
   }, healthCheckIntervalMs);
 }
 
-export async function isInstanceHealthy(instanceName: string) {
+async function isInstanceHealthy(instanceName) {
   const status = await redisClient.get(healthKey(instanceName));
   return status === "UP";
 }
 
-export async function getHealthSnapshot(services: ServiceRegistry) {
+async function getHealthSnapshot(services) {
   const entries = await Promise.all(
     Object.values(services)
       .flat()
@@ -56,3 +53,10 @@ export async function getHealthSnapshot(services: ServiceRegistry) {
 
   return Object.fromEntries(entries);
 }
+
+module.exports = {
+  refreshHealthCache,
+  startHealthChecks,
+  isInstanceHealthy,
+  getHealthSnapshot
+};

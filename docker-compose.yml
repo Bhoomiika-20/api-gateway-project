@@ -30,7 +30,7 @@ services:
       PRODUCT_SERVICE_2_URL: http://product-service-2:6002
     ports:
       - "3000:3000"
-    command: ["node", "dist/gateway/src/index.js"]
+    command: ["node", "gateway/src/index.js"]
 
   user-service-1:
     build:
@@ -38,7 +38,7 @@ services:
     environment:
       PORT: 4001
       INSTANCE_NAME: user-service-1
-    command: ["node", "dist/services/user-service/src/index.js"]
+    command: ["node", "services/user-service/src/index.js"]
 
   user-service-2:
     build:
@@ -46,7 +46,7 @@ services:
     environment:
       PORT: 4002
       INSTANCE_NAME: user-service-2
-    command: ["node", "dist/services/user-service/src/index.js"]
+    command: ["node", "services/user-service/src/index.js"]
 
   order-service-1:
     build:
@@ -54,7 +54,7 @@ services:
     environment:
       PORT: 5001
       INSTANCE_NAME: order-service-1
-    command: ["node", "dist/services/order-service/src/index.js"]
+    command: ["node", "services/order-service/src/index.js"]
 
   order-service-2:
     build:
@@ -62,7 +62,7 @@ services:
     environment:
       PORT: 5002
       INSTANCE_NAME: order-service-2
-    command: ["node", "dist/services/order-service/src/index.js"]
+    command: ["node", "services/order-service/src/index.js"]
 
   product-service-1:
     build:
@@ -70,7 +70,7 @@ services:
     environment:
       PORT: 6001
       INSTANCE_NAME: product-service-1
-    command: ["node", "dist/services/product-service/src/index.js"]
+    command: ["node", "services/product-service/src/index.js"]
 
   product-service-2:
     build:
@@ -78,4 +78,4 @@ services:
     environment:
       PORT: 6002
       INSTANCE_NAME: product-service-2
-    command: ["node", "dist/services/product-service/src/index.js"]
+    command: ["node", "services/product-service/src/index.js"]

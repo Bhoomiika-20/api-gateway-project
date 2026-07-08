@@ -1,9 +1,8 @@
-import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
 const jwtSecret = process.env.JWT_SECRET || "dev-secret-change-me";
 
-export function createDemoToken() {
+function createDemoToken() {
   return jwt.sign(
     {
       sub: "demo-user-1",
@@ -16,7 +15,7 @@ export function createDemoToken() {
   );
 }
 
-export function authenticateJwt(req: Request, res: Response, next: NextFunction) {
+function authenticateJwt(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -38,3 +37,8 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
     });
   }
 }
+
+module.exports = {
+  createDemoToken,
+  authenticateJwt
+};

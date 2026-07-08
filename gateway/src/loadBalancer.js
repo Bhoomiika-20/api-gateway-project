@@ -1,22 +1,14 @@
-export type ServiceInstance = {
-  name: string;
-  url: string;
-};
+class RoundRobinLoadBalancer {
+  constructor(services) {
+    this.services = services;
+    this.currentIndexes = {
+      users: 0,
+      orders: 0,
+      products: 0
+    };
+  }
 
-export type ServiceName = "users" | "orders" | "products";
-
-export type ServiceRegistry = Record<ServiceName, ServiceInstance[]>;
-
-export class RoundRobinLoadBalancer {
-  private currentIndexes: Record<ServiceName, number> = {
-    users: 0,
-    orders: 0,
-    products: 0
-  };
-
-  constructor(private readonly services: ServiceRegistry) {}
-
-  getNextInstance(serviceName: ServiceName): ServiceInstance {
+  getNextInstance(serviceName) {
     const instances = this.services[serviceName];
 
     if (instances.length === 0) {
@@ -31,7 +23,7 @@ export class RoundRobinLoadBalancer {
     return selectedInstance;
   }
 
-  getNextHealthyInstance(serviceName: ServiceName, healthyInstanceNames: string[]): ServiceInstance | null {
+  getNextHealthyInstance(serviceName, healthyInstanceNames) {
     const healthyInstances = this.services[serviceName].filter((instance) =>
       healthyInstanceNames.includes(instance.name)
     );
@@ -52,3 +44,7 @@ export class RoundRobinLoadBalancer {
     return this.services;
   }
 }
+
+module.exports = {
+  RoundRobinLoadBalancer
+};
