@@ -4,6 +4,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { RoundRobinLoadBalancer, ServiceInstance, ServiceName } from "./loadBalancer";
 import { authenticateJwt, createDemoToken } from "./auth";
 import { getHealthSnapshot, isInstanceHealthy, startHealthChecks } from "./healthChecker";
+import { recordRequest, recordUpstreamError, renderMetrics } from "./metrics";
 import { rateLimiter } from "./rateLimiter";
 import { connectRedis } from "./redisClient";
 
@@ -40,10 +41,12 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
   res.on("finish", () => {
     const gatewayReq = req as GatewayRequest;
     const durationMs = Date.now() - startedAt;
+    const selectedService = gatewayReq.selectedServiceInstance || "gateway";
+
+    recordRequest(req, res.statusCode, durationMs, selectedService);
+
     console.log(
-      `${new Date().toISOString()} ${req.method} ${req.originalUrl} -> ${
-        gatewayReq.selectedServiceInstance || "gateway"
-      } ${res.statusCode} ${durationMs}ms`
+      `${new Date().toISOString()} ${req.method} ${req.originalUrl} -> ${selectedService} ${res.statusCode} ${durationMs}ms`
     );
   });
 
@@ -103,6 +106,7 @@ function createServiceProxy(serviceName: ServiceName) {
           `Proxy error while calling ${gatewayReq.selectedServiceInstance || serviceName}:`,
           error.message
         );
+        recordUpstreamError();
 
         if ("writeHead" in res && !res.headersSent) {
           res.writeHead(502, { "Content-Type": "application/json" });
@@ -137,22 +141,30 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/health-cache", async (_req, res) => {
-  res.json({
-    service: "api-gateway",
-    healthCache: await getHealthSnapshot(loadBalancer.getRegistry())
-  });
+  try {
+    res.json({
+      service: "api-gateway",
+      healthCache: await getHealthSnapshot(loadBalancer.getRegistry())
+    });
+  } catch {
+    res.status(503).json({
+      error: "Service Unavailable",
+      message: "Gateway cannot read health cache right now"
+    });
+  }
 });
 
 app.get("/metrics", async (_req, res) => {
-  res.type("text/plain").send(`# Day 3 placeholder metrics
-gateway_info{feature="jwt"} 1
-gateway_info{feature="redis_rate_limit"} 1
-gateway_info{feature="redis_health_cache"} 1
-`);
+  try {
+    const healthSnapshot = await getHealthSnapshot(loadBalancer.getRegistry());
+    res.type("text/plain").send(renderMetrics(healthSnapshot));
+  } catch {
+    res.type("text/plain").send(renderMetrics({}));
+  }
 });
 
-app.use(rateLimiter);
 app.use(authenticateJwt);
+app.use(rateLimiter);
 
 app.use("/users", selectHealthyInstance("users"), createServiceProxy("users"));
 app.use("/orders", selectHealthyInstance("orders"), createServiceProxy("orders"));
@@ -165,7 +177,7 @@ app.use((_req, res) => {
   });
 });
 
-async function startGateway() {
+export async function startGateway() {
   await connectRedis();
   startHealthChecks(loadBalancer.getRegistry());
 
@@ -175,7 +187,11 @@ async function startGateway() {
   });
 }
 
-startGateway().catch((error) => {
-  console.error("Gateway failed to start:", error);
-  process.exit(1);
-});
+if (require.main === module) {
+  startGateway().catch((error) => {
+    console.error("Gateway failed to start:", error);
+    process.exit(1);
+  });
+}
+
+export { app, loadBalancer };

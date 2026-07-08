@@ -1,0 +1,81 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  gateway:
+    build:
+      context: .
+    depends_on:
+      - redis
+      - user-service-1
+      - user-service-2
+      - order-service-1
+      - order-service-2
+      - product-service-1
+      - product-service-2
+    environment:
+      GATEWAY_PORT: 3000
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-me
+      RATE_LIMIT_WINDOW_SECONDS: 60
+      RATE_LIMIT_MAX_REQUESTS: 20
+      HEALTH_CHECK_INTERVAL_MS: 5000
+      USER_SERVICE_1_URL: http://user-service-1:4001
+      USER_SERVICE_2_URL: http://user-service-2:4002
+      ORDER_SERVICE_1_URL: http://order-service-1:5001
+      ORDER_SERVICE_2_URL: http://order-service-2:5002
+      PRODUCT_SERVICE_1_URL: http://product-service-1:6001
+      PRODUCT_SERVICE_2_URL: http://product-service-2:6002
+    ports:
+      - "3000:3000"
+    command: ["node", "dist/gateway/src/index.js"]
+
+  user-service-1:
+    build:
+      context: .
+    environment:
+      PORT: 4001
+      INSTANCE_NAME: user-service-1
+    command: ["node", "dist/services/user-service/src/index.js"]
+
+  user-service-2:
+    build:
+      context: .
+    environment:
+      PORT: 4002
+      INSTANCE_NAME: user-service-2
+    command: ["node", "dist/services/user-service/src/index.js"]
+
+  order-service-1:
+    build:
+      context: .
+    environment:
+      PORT: 5001
+      INSTANCE_NAME: order-service-1
+    command: ["node", "dist/services/order-service/src/index.js"]
+
+  order-service-2:
+    build:
+      context: .
+    environment:
+      PORT: 5002
+      INSTANCE_NAME: order-service-2
+    command: ["node", "dist/services/order-service/src/index.js"]
+
+  product-service-1:
+    build:
+      context: .
+    environment:
+      PORT: 6001
+      INSTANCE_NAME: product-service-1
+    command: ["node", "dist/services/product-service/src/index.js"]
+
+  product-service-2:
+    build:
+      context: .
+    environment:
+      PORT: 6002
+      INSTANCE_NAME: product-service-2
+    command: ["node", "dist/services/product-service/src/index.js"]

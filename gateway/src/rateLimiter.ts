@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { recordRateLimitedRequest } from "./metrics";
 import { redisClient } from "./redisClient";
 
 const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 60;
@@ -21,6 +22,7 @@ export async function rateLimiter(req: Request, res: Response, next: NextFunctio
     res.setHeader("X-RateLimit-Remaining", Math.max(maxRequests - currentCount, 0));
 
     if (currentCount > maxRequests) {
+      recordRateLimitedRequest();
       return res.status(429).json({
         error: "Too Many Requests",
         message: `Rate limit exceeded. Try again after ${windowSeconds} seconds.`
