@@ -110,12 +110,6 @@ npm run dev:gateway
 
 ## Docker Compose
 
-If you previously started Redis manually, stop it first so port `6379` is free:
-
-```bash
-docker stop api-gateway-redis
-```
-
 Run the whole system:
 
 ```bash
@@ -130,7 +124,7 @@ docker compose down
 
 Troubleshooting:
 
-- If port `6379` is already in use, stop the manually started Redis container with `docker stop api-gateway-redis`.
+- Docker Compose does not expose Redis to the host by default. The gateway reaches Redis inside Docker through `redis://redis:6379`.
 - If Docker shows `Access is denied` for `.docker/config.json` or `buildx`, close Docker Desktop and VS Code, then reopen both from the same Windows user account.
 
 The client should only call the gateway:
