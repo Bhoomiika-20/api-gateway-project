@@ -1,0 +1,45 @@
+{
+  "name": "resume-ready-api-gateway",
+  "version": "1.0.0",
+  "description": "Beginner-friendly custom API Gateway project built incrementally over 5 days.",
+  "main": "dist/gateway/src/index.js",
+  "scripts": {
+    "dev:gateway": "tsx watch gateway/src/index.ts",
+    "dev:user": "tsx watch services/user-service/src/index.ts",
+    "dev:user:1": "set PORT=4001&& set INSTANCE_NAME=user-service-1&& tsx watch services/user-service/src/index.ts",
+    "dev:user:2": "set PORT=4002&& set INSTANCE_NAME=user-service-2&& tsx watch services/user-service/src/index.ts",
+    "dev:order": "tsx watch services/order-service/src/index.ts",
+    "dev:order:1": "set PORT=5001&& set INSTANCE_NAME=order-service-1&& tsx watch services/order-service/src/index.ts",
+    "dev:order:2": "set PORT=5002&& set INSTANCE_NAME=order-service-2&& tsx watch services/order-service/src/index.ts",
+    "dev:product": "tsx watch services/product-service/src/index.ts",
+    "dev:product:1": "set PORT=6001&& set INSTANCE_NAME=product-service-1&& tsx watch services/product-service/src/index.ts",
+    "dev:product:2": "set PORT=6002&& set INSTANCE_NAME=product-service-2&& tsx watch services/product-service/src/index.ts",
+    "build": "tsc",
+    "start:gateway": "node dist/gateway/src/index.js",
+    "start:user": "node dist/services/user-service/src/index.js",
+    "start:order": "node dist/services/order-service/src/index.js",
+    "start:product": "node dist/services/product-service/src/index.js"
+  },
+  "keywords": [
+    "api-gateway",
+    "reverse-proxy",
+    "express",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "redis": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
